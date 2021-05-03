@@ -3,15 +3,15 @@
     return to_enum unless block_given?
     
     for item in self
-    puts yield item
+    yield item
     end
   end
+
+  def my_each_with_index
+    return to-enum unless block_given?
+    i = 0
+    my.each do |item|
+      yield item                                  
+  end
+
 [1,2,5,3].my_each{ |item| item.length}
-
-
-# %w[ant bear cat].my_each? { |word| word.length >= 3 } #=> true
-# %w[ant bear cat].my_each? { |word| word.length >= 4 } #=> false
-# %w[ant bear cat].my_each?(/t/)                        #=> false
-# [1, 2i, 3.14].my_each?(Numeric)                       #=> true
-# [nil, true, 99].my_each?                              #=> false
-# [].my_each?                                           #=> true
