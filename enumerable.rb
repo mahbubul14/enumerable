@@ -80,21 +80,28 @@ module Enumerable
     new_arr
   end
 
-  def my_inject(num = nil, sym = nil)
-    array = to_a
-    acc = num || array[0]
-    i = num ? 0 : 1
-    if block_given?
-      (i...array.length).each { |idx| acc = yield(acc, array[idx]) }
-    elsif num && sym
-      (i...array.length).each { |idx| acc = acc.send(sym, array[idx]) }
-    elsif num
-      acc = array[0]
-      (1...array.length).each { |idx| acc = acc.send(num, array[idx]) }
-    else
-      raise LocalJumpError
+  def my_inject(*params)
+    arr = to_a
+    result = params[0] if params[0].is_a? Integer
+
+    case params[0]
+    when Symbol, String
+      symbol = params[0]
+
+    when Integer
+      symbol = params[1] if params[1].is_a?(Symbol) || params[1].is_a?(String)
     end
-    acc
+
+    if symbol
+      arr.my_each { |item| result = result ? result.send(symbol, item) : item }
+    else
+      arr.my_each { |item| result = result ? yield(result, item) : item }
+    end
+
+    result
+  end
+    end
+    result
   end
 end
 
