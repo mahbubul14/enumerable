@@ -1,71 +1,100 @@
+
+# rubocop:disable Style/For
+# rubocop:disable Metrics/ModuleLength
+# rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
 module Enumerable
-  def my_each(&block)
+  def my_each
     return to_enum unless block_given?
 
-    each(&block)
-  end
+    for ele in self
+      yield ele
+    end
+  end                               
 
   def my_each_with_index
     return to_enum unless block_given?
 
-    index = 0
-    each do |i|
-      yield i, index
-      index += 1
+    i = 0
+    my_each do |ele|
+      yield ele, i
+      i += 1
     end
   end
 
   def my_select
     return to_enum unless block_given?
 
-    new_arr = []
-    my_each { |list| new_arr << list if yield list }
-    new_arr = []
+    array = []
+    my_each do |i|
+      array.push(i) if yield i
+    end
+    array
   end
 
-  def my_all?(para = nil)
+  def my_all?(args = nil)
+    to_a
     if block_given?
-      my_each { |list| return false unless yield list }
-    elsif para
-      my_each { |list| return false unless match?(list, para) }
+      my_each { |i| return false unless yield(i) == true }
+    elsif args.nil?
+      my_each { |i| return false if i == false || i.nil? }
+    elsif args.instance_of?(Class)
+      my_each { |i| return false if i.class.superclass != args && i.class != args }
+    elsif args.instance_of?(Regexp)
+      my_each { |i| return false unless args.match(i) }
     else
-      my_each { |list| return false unless list }
+      my_each { |i| return false if i != args }
     end
     true
   end
 
-  def my_any?(para = nil)
+  def my_any?(args = nil)
+    to_a
     if block_given?
-      my_each { |ele| return true if yield ele }
-    elsif para
-      my_each { |ele| return true if match?(ele, para) }
+      my_each { |i| return true if yield i }
+    elsif args.nil?
+      my_each { |i| return true if i }
+    elsif args.instance_of?(Class)
+      my_each { |i| return true if i.instance_of?(args) || i.class.superclass == args }
+    elsif args.instance_of?(Regexp)
+      my_each { |i| return true if args.match(i) }
     else
-      my_each { |ele| return true if ele }
+      my_each { |i| return true if i == args }
     end
     false
   end
 
-  def my_none?(para = nil)
+  def my_none?(args = nil)
     if block_given?
-      my_each { |ele| return false if yield ele }
-    elsif para
-      my_each { |ele| return false if match?(ele, para) }
+      my_each { |i| return false if yield i }
+    elsif args.instance_of?(Regexp)
+      my_each { |i| return false if args.match(i) }
+    elsif args.instance_of?(Class)
+      my_each { |i| return false if i.is_a?(args) }
+    elsif args.nil?
+      my_each { |i| return false if i }
     else
-      my_each { |ele| return false if ele }
+      my_each { |i| return false if i == args }
     end
     true
   end
 
-  def my_count(para = nil)
-    count = 0
+  def my_count(*args)
+    i = 0
     if block_given?
-      my_each { |ele| count += 1 if yield ele }
-    elsif para
-      my_each { |ele| count += 1 if match?(ele, para) }
+      my_each do |x|
+        i += 1 if yield x
+      end
+    elsif args.empty?
+      my_each do |_x|
+        i += 1
+      end
     else
-      return length
+      my_each do |x|
+        i += 1 if x == args[0]
+      end
     end
-    count
+    i
   end
 
   def my_map(proc = nil)
@@ -79,9 +108,6 @@ module Enumerable
     end
     new_arr
   end
-
-  # rubocop:disable Metrics/CyclomaticComplexity
-  # rubocop:disable Metrics/PerceivedComplexity
 
   def my_inject(*params)
     arr = to_a
@@ -103,10 +129,17 @@ module Enumerable
 
     result
   end
-  # rubocop:enable Metrics/CyclomaticComplexity
-  # rubocop:enable Metrics/PerceivedComplexity
+# rubocop:enable Style/For
+# rubocop:enable Metrics/ModuleLength
+# rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 end
 
 def multiply_els(array)
   array.my_inject(1) { |index, result| result * index }
 end
+%w[ant bear cat].my_all? { |word| word.length >= 3 } #=> true
+%w[ant bear cat].my_all? { |word| word.length >= 4 } #=> false
+%w[ant bear cat].my_all?(/t/)                        #=> false
+[1, 2i, 3.14].my_all?(Numeric)                       #=> true
+[nil, true, 99].my_all?                              #=> false
+[].my_all?                                           #=> true
