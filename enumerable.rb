@@ -1,4 +1,3 @@
-
 # rubocop:disable Style/For
 # rubocop:disable Metrics/ModuleLength
 # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -10,7 +9,7 @@ module Enumerable
     for ele in self
       yield ele
     end
-  end                               
+  end
 
   def my_each_with_index
     return to_enum unless block_given?
@@ -129,17 +128,11 @@ module Enumerable
 
     result
   end
-# rubocop:enable Style/For
-# rubocop:enable Metrics/ModuleLength
-# rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:enable Style/For
+  # rubocop:enable Metrics/ModuleLength
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 end
 
 def multiply_els(array)
   array.my_inject(1) { |index, result| result * index }
 end
-%w[ant bear cat].my_all? { |word| word.length >= 3 } #=> true
-%w[ant bear cat].my_all? { |word| word.length >= 4 } #=> false
-%w[ant bear cat].my_all?(/t/)                        #=> false
-[1, 2i, 3.14].my_all?(Numeric)                       #=> true
-[nil, true, 99].my_all?                              #=> false
-[].my_all?                                           #=> true
