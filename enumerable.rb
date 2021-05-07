@@ -1,77 +1,139 @@
-module Enumerable
-  def my_each(&block)
-    return unless block_given?
+# rubocop:disable Style/For
+# rubocop:disable Metrics/ModuleLength
+# rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-    each(&block)
+module Enumerable
+  def my_each
+    return to_enum unless block_given?
+
+    for ele in self
+      yield ele
+    end
   end
 
   def my_each_with_index
-    return unless block_given?
+    return to_enum unless block_given?
 
-    index = 0
-    each do |i|
-      yield i, index
-      index += 1
+    i = 0
+    my_each do |ele|
+      yield ele, i
+      i += 1
     end
   end
 
   def my_select
     return to_enum unless block_given?
 
-    new_arr = []
-    my_each { |list| new_arr << list if yield list }
-    new_arr = []
-  end
-
-  def my_all?(&block)
-    return to_enum unless block_given?
-
-    result = my_select(&block)
-    length == result.length
-  end
-
-  def my_any?(&block)
-    return to_enum unless block_given?
-
-    result = my_select(&block)
-    result.length.positive?
-  end
-
-  def my_none?
-    return to_enum unless block_given?
-
-    !my_any?
-  end
-
-  def my_count(&block)
-    return count if count
-    return length unless block_given?
-
-    my_select(&block).length
-  end
-
-  def my_map(my_proc = nil)
     array = []
-    my_each { |x| array << my_proc.call(x) } if my_proc
-    my_each { |x| array << yield(x) } if block_given?
+    my_each do |i|
+      array.push(i) if yield i
+    end
     array
   end
 
-  def my_inject(*args)
-    case args.length
-    when 1 then args.first.is_a?(Symbol) ? sym = args.first : result = args.first
-    when 2 then result = args.first
-                sym = args.last
+  def my_all?(args = nil)
+    to_a
+    if block_given?
+      my_each { |i| return false unless yield(i) == true }
+    elsif args.nil?
+      my_each { |i| return false if i == false || i.nil? }
+    elsif args.instance_of?(Class)
+      my_each { |i| return false if i.class.superclass != args && i.class != args }
+    elsif args.instance_of?(Regexp)
+      my_each { |i| return false unless args.match(i) }
+    else
+      my_each { |i| return false if i != args }
+    end
+    true
+  end
+
+  def my_any?(args = nil)
+    to_a
+    if block_given?
+      my_each { |i| return true if yield i }
+    elsif args.nil?
+      my_each { |i| return true if i }
+    elsif args.instance_of?(Class)
+      my_each { |i| return true if i.instance_of?(args) || i.class.superclass == args }
+    elsif args.instance_of?(Regexp)
+      my_each { |i| return true if args.match(i) }
+    else
+      my_each { |i| return true if i == args }
+    end
+    false
+  end
+
+  def my_none?(args = nil)
+    if block_given?
+      my_each { |i| return false if yield i }
+    elsif args.instance_of?(Regexp)
+      my_each { |i| return false if args.match(i) }
+    elsif args.instance_of?(Class)
+      my_each { |i| return false if i.is_a?(args) }
+    elsif args.nil?
+      my_each { |i| return false if i }
+    else
+      my_each { |i| return false if i == args }
+    end
+    true
+  end
+
+  def my_count(*args)
+    i = 0
+    if block_given?
+      my_each do |x|
+        i += 1 if yield x
+      end
+    elsif args.empty?
+      my_each do |_x|
+        i += 1
+      end
+    else
+      my_each do |x|
+        i += 1 if x == args[0]
+      end
+    end
+    i
+  end
+
+  def my_map(proc = nil)
+    new_arr = []
+    if proc
+      my_each { |list| new_arr << proc.call(list) }
+    elsif block_given?
+      my_each { |list| new_arr << yield(list) }
+    else
+      return to_enum unless block_given?
+    end
+    new_arr
+  end
+
+  def my_inject(*params)
+    arr = to_a
+    result = params[0] if params[0].is_a? Integer
+
+    case params[0]
+    when Symbol, String
+      symbol = params[0]
+
+    when Integer
+      symbol = params[1] if params[1].is_a?(Symbol) || params[1].is_a?(String)
     end
 
-    result ||= 0
-
-    my_each { |x| result = block_given? ? yield(result, x) : result.send(sym, x) }
+    if symbol
+      arr.my_each { |item| result = result ? result.send(symbol, item) : item }
+    else
+      arr.my_each { |item| result = result ? yield(result, item) : item }
+    end
 
     result
   end
+end
 
-  def multiply_els
-    my_inject(1, :*)
-  end
+# rubocop:enable Style/For
+# rubocop:enable Metrics/ModuleLength
+# rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+def multiply_els(array)
+  array.my_inject(1) { |index, result| result * index }
 end
