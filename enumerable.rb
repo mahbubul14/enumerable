@@ -80,6 +80,9 @@ module Enumerable
     new_arr
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
+
   def my_inject(*params)
     arr = to_a
     result = params[0] if params[0].is_a? Integer
@@ -100,9 +103,8 @@ module Enumerable
 
     result
   end
-    end
-    result
-  end
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/PerceivedComplexity
 end
 
 def multiply_els(array)
