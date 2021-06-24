@@ -28,6 +28,7 @@ module Enumerable
     my_each do |i|
       array.push(i) if yield i
     end
+    
     array
   end
 
